@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Course Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- NEW: Futuristic Font --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            /* --- NEW: Futuristic Background --- */
+            background-color: #0f0c29;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+        }
+
+        /* --- NEW: Glassmorphism Card Style --- */
+        .glass-card {
+            background-color: rgba(17, 24, 39, 0.7); /* slate-900 with 70% opacity */
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            border: 1px solid rgba(14, 165, 233, 0.4); /* sky-500 */
+            border-radius: 0.75rem;
+            box-shadow: 0 0 25px rgba(14, 165, 233, 0.2); /* Neon sky glow */
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            box-shadow: 0 0 35px rgba(14, 165, 233, 0.4);
+        }
+
+        /* --- NEW: Text Color Overrides --- */
+        .text-gray-800 { color: #f3f4f6; } /* gray-100 */
+        .text-gray-700 { color: #d1d5db; } /* gray-300 */
+        .text-gray-600 { color: #9ca3af; } /* gray-400 */
+        .text-gray-500 { color: #6b7281; } /* gray-500 */
+        .text-gray-900 { color: #ffffff; }
+
+        h1 {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.5); /* Pink glow */
+        }
+        
+        /* --- NEW: Select Dropdown Style --- */
+        select {
+            background-color: rgba(30, 41, 59, 0.8); /* slate-800 */
+            color: #e0e0e0;
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+        select:focus {
+            --tw-ring-color: #0ea5e9; /* sky-500 */
+            --tw-border-color: #0ea5e9;
+        }
+
+        /* --- UPDATED: Clash/Priority Colors on Dark BG --- */
+        option.clash {
+            color: #ffffff !important;
+            text-decoration: line-through !important;
+            background-color: #b91c1c !important; /* red-700 */
+            font-weight: 700 !important;
+        }
+
+        .emoji-p1 { color: #22c55e; } /* green-500 */
+        .emoji-p2 { color: #eab308; } /* yellow-500 */
+        .p3 { color: #6b7281; } /* gray-500 */
+        
+        option.p1 {
+            background-color: #15803d !important; /* green-700 */
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+        option.p2 {
+            background-color: #ca8a04 !important; /* yellow-600 */
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+        option.p3 {
+            background-color: #334155; /* slate-700 */
+            color: #e0e0e0;
+        }
+
+        select.selected-valid {
+             border-color: #22c55e; /* green-500 */
+             box-shadow: 0 0 0 2px #22c55e;
+        }
+        select.selected-clash {
+             border-color: #ef4444; /* red-500 */
+             box-shadow: 0 0 0 2px #ef4444;
+        }
+
+        /* --- NEW: Lock Button Style --- */
+        .lock-btn {
+            font-size: 1.1rem;
+            padding: 0.25rem;
+            border-radius: 0.375rem;
+            color: #9ca3af; /* gray-400 */
+            transition: all 0.2s;
+        }
+        .lock-btn:hover {
+            background-color: rgba(55, 65, 81, 0.5); /* gray-600 */
+            color: #0ea5e9; /* sky-500 */
+        }
+        .lock-btn.locked {
+            color: #0ea5e9; /* sky-500 */
+            text-shadow: 0 0 8px #0ea5e9;
+        }
+        
+        /* --- NEW: Day Toggle Buttons --- */
+        .day-toggle {
+            padding: 0.25rem 0.75rem;
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #9ca3af; /* gray-400 */
+            background-color: rgba(30, 41, 59, 0.5); /* slate-800 */
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .day-toggle:hover {
+            background-color: rgba(51, 65, 85, 0.5); /* slate-600 */
+            color: #ffffff;
+            border-color: #0ea5e9;
+        }
+        .day-toggle.selected {
+            background-color: #be123c; /* rose-700 */
+            color: #ffffff;
+            border-color: #be123c;
+            text-shadow: 0 0 5px #ffffff;
+        }
+
+        /* --- NEW: AI Review Box Style --- */
+        #ai-review-box {
+            background-color: rgba(17, 24, 39, 0.5); /* slate-900 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none; /* Hidden by default */
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        #ai-review-box h4 {
+            color: #0ea5e9; /* sky-500 */
+            font-weight: 600;
+        }
+        #ai-review-box p {
+            font-size: 0.875rem;
+            color: #d1d5db; /* gray-300 */
+        }
+        /* --- NEW: AI Keyword Pill Style --- */
+        .ai-keyword {
+            display: inline-block;
+            background-color: rgba(14, 165, 233, 0.1);
+            color: #38bdf8; /* sky-400 */
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            margin: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        /* --- NEW: Spinner Style --- */
+        .spinner {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #374151; /* gray-700 */
+            border-top-color: #0ea5e9; /* sky-500 */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0.5rem auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- NEW: Weekly View Style --- */
+        #weekly-view {
+            border-color: rgba(14, 165, 233, 0.3);
+            background-color: rgba(17, 24, 39, 0.5); /* slate-900 */
+        }
+        .time-header, .day-header {
+            color: #9ca3af; /* gray-400 */
+            font-weight: 600;
+            background-color: rgba(30, 41, 59, 0.5); /* slate-800 */
+            border-color: rgba(14, 165, 233, 0.2);
+            font-size: 0.75rem; /* Smaller header font */
+            padding: 0.5rem 0.25rem;
+        }
+        .calendar-cell {
+            border-color: rgba(14, 165, 233, 0.2);
+            transition: background-color 0.3s;
+            position: relative; /* This is crucial for absolute positioning */
+            vertical-align: top;
+            height: 4rem; /* 64px - CHANGED */
+        }
+        .calendar-slot {
+            font-size: 0.7rem;
+            line-height: 1.2;
+            padding: 4px;
+            border-radius: 4px;
+            color: #ffffff;
+            border: 1px solid;
+            box-shadow: 0 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            /* --- NEW: Absolute positioning --- */
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            z-index: 10;
+        }
+        /* --- REMOVED: Slot Colors (now inline) --- */
+        
+        .slot-clash {
+            background-color: rgba(239, 68, 68, 0.7) !important;
+            border-color: rgba(239, 68, 68, 1) !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8) !important;
+            animation: pulse 1s infinite;
+            z-index: 20; /* Clashes on top */
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* --- NEW: Button Styles --- */
+        #auto-select-btn, #ai-review-btn {
+            background: linear-gradient(90deg, #0ea5e9 0%, #ec4899 100%);
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
+        }
+        #auto-select-btn:hover, #ai-review-btn:hover {
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.5);
+            transform: translateY(-2px);
+        }
+        #auto-select-btn:disabled, #ai-review-btn:disabled {
+            background: #334155; /* slate-700 */
+            opacity: 0.5;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+        }
+        #ai-review-btn {
+             background: linear-gradient(90deg, #a855f7 0%, #f43f5e 100%);
+             box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        }
+        #ai-review-btn:hover {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+        }
+        
+        /* --- NEW: Table/Summary Styles --- */
+        tbody tr {
+            border-color: rgba(14, 165, 233, 0.2);
+            background-color: rgba(17, 24, 39, 0.3); /* slate-900 */
+        }
+        tbody tr:hover {
+            background-color: rgba(30, 41, 59, 0.5); /* slate-800 */
+        }
+        thead {
+            background-color: rgba(30, 41, 59, 0.8); /* slate-800 */
+        }
+        
+        /* --- NEW: Scrollbar Style --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0ea5e9; /* sky-500 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8; /* sky-400 */
+        }
+        
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-4 text-center">I N T E R A C T I V E // S C H E D U L E R</h1>
+        <p class="text-center text-gray-400 mb-6">Lock your choices. Exclude days. Generate your future.</p>
+
+        <div id="summary-box" class="glass-card p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-3">COMMAND CENTER // SUMMARY</h2>
+            <div id="summary-content" class="text-gray-400">
+                <p>Awaiting input... Select sections or use the Generator.</p>
+            </div>
+            <div id="summary-details" class="mt-4 overflow-x-auto">
+                </div>
+            
+            <div id="weekly-view-container" class="mt-4 pt-4 border-t" style="border-color: rgba(14, 165, 233, 0.2);">
+                <h3 class="text-lg font-semibold text-gray-300 mb-3">WEEKLY VIEW</h3>
+                <div id="weekly-view" class="border rounded-lg overflow-hidden">
+                    </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t" style="border-color: rgba(14, 165, 233, 0.2);">
+                <label class="text-sm font-medium text-gray-300">EXCLUDE DAYS:</label>
+                <div id="day-toggle-group" class="flex flex-wrap gap-2 mt-2">
+                    <button class="day-toggle" data-day="Sat">Sat</button>
+                    <button class="day-toggle" data-day="Sun">Sun</button>
+                    <button class="day-toggle" data-day="Mon">Mon</button>
+                    <button class="day-toggle" data-day="Tue">Tue</button>
+                    <button class="day-toggle" data-day="Wed">Wed</button>
+                    <button class="day-toggle" data-day="Thu">Thu</button>
+                    <button class="day-toggle" data-day="Fri">Fri</button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-4 pt-4 border-t" style="border-color: rgba(14, 165, 233, 0.2);">
+                <div class="flex items-center flex-wrap gap-4">
+                    <button id="auto-select-btn" class="text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">Generate</button>
+                    
+                    <label for="sort-criteria" class="text-sm font-medium text-gray-300 ml-4 mr-2">Sort by:</label>
+                    <select id="sort-criteria" class="text-sm rounded-lg focus:ring-2">
+                        <option value="priority" selected>Best Priority Score</option>
+                        <option value="compact">Least Days (Compact)</option>
+                    </select>
+
+                    <button id="ai-review-btn" class="text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled title="Select a full, non-clashing schedule to enable">
+                        ✨ Get AI Review
+                    </button>
+                </div>
+                <div id="auto-select-nav" class="hidden items-center">
+                    <button id="prev-solution" class="text-sm p-2 hover:bg-gray-700 rounded-md disabled:opacity-50 text-gray-300" title="Previous Combination">◀ Prev</button>
+                    <span id="solution-index" class="text-sm mx-2">0 of 0</span>
+                    <button id="next-solution" class="text-sm p-2 hover:bg-gray-700 rounded-md disabled:opacity-50 text-gray-300" title="Next Combination">Next ▶</button>
+                </div>
+            </div>
+
+            <div id="ai-review-box">
+                <h4 class="font-semibold">✨ AI Schedule Review</h4>
+                <div id="ai-review-content" class="mt-2">
+                    </div>
+            </div>
+        </div>
+
+        <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+    </div>
+
+    <script>
+        // --- 1. DATA ---
+        // Faculty priority lists
+        const priority1_faculty = new Set([
+            'Kazi Abdun Noorabdunnoor@cse.uiu.ac.bd',
+            'Sidratul Muntahasidratulmuntaha.du.bd@gmail.com',
+            'Noman Asif Adityaaditya@cse.uiu.ac.bd',
+            'Didarul Islam Didardidarul@cse.uiu.ac.bd',
+            'Md. Enamul Haquemhaque182055@bscse.uiu.ac.bd',
+            'Azizur Rahman Anikazizur@cse.uiu.ac.bd',
+            'Nahid Hossainnahid@cse.uiu.ac.bd'
+        ]);
+
+        const priority2_faculty = new Set([
+            'S.M. Yiasir Arafatyiasirarafat28@gmail.com',
+            'Taki Yashirtaki@cse.uiu.ac.bd',
+            'Samin Sharaf Somiksamin@cse.uiu.ac.bd',
+            'Shahil Yasar Haqueshahilyasarhaque@gmail.com',
+            'Khandokar Md. Rahat Hossainrahat@cse.uiu.ac.bd',
+            'Md. Enamul Haquemhaque182055@bscse.uiu.ac.bd'
+        ]);
+        
+        // --- NEW: Course Colors & Short Names ---
+        const courseColors = { 
+            "CSE 2118": "#0ea5e9", // Sky
+            "CSE 4777": "#ec4899", // Pink
+            "EEE 2124": "#f97316", // Orange
+            "CSE 3421": "#84cc16", // Lime
+            "CSE 3522": "#a855f7", // Purple
+            "CSE 4510": "#f59e0b", // Amber
+            "CSE 4165": "#14b8a6"  // Teal
+        };
+        
+        const shortNames = {
+            "CSE 2118": "Adv. OOP Lab",
+            "CSE 4777": "Net Sec",
+            "EEE 2124": "Electronics Lab",
+            "CSE 3421": "Soft. Eng.",
+            "CSE 3522": "DBMS Lab",
+            "CSE 4510": "OS Lab",
+            "CSE 4165": "Web Prog."
+        };
+
+
+        // Full course data parsed from your files
+        const courseData = {
+  "CSE 2118": {
+    "name": "Advanced Object Oriented Programming Laboratory",
+    "sections": [
+      {
+        "faculty": "Abdus Sayef Reyadhsayef.reyadh.aust@gmail.com",
+        "section": "A",
+        "schedule": "Sun 11:11 - 13:40"
+      },
+      {
+        "faculty": "Mohammad Mirazur Rahmanm.mirazur.bd@gmail.com",
+        "section": "B",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Ashraful Kabirsmile243anik@gmail.com",
+        "section": "C",
+        "schedule": "Sat 11:11 - 13:40"
+      },
+      {
+        "faculty": "Kazi Abdun Noorabdunnoor@cse.uiu.ac.bd",
+        "section": "D",
+        "schedule": "Wed 11:11 - 13:40"
+      },
+      {
+        "faculty": "Md. Enamul Haquemhaque182055@bscse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Tue 08:30 - 11:00"
+      },
+      {
+        "faculty": "Faria Tabassumfariatabassum3@gmail.com",
+        "section": "F",
+        "schedule": "Wed 14:00 - 16:30"
+      },
+      {
+        "faculty": "Miftahul Sheikhmiftahulsheikh1100@gmail.com",
+        "section": "G",
+        "schedule": "Tue 14:00 - 16:30"
+      },
+      {
+        "faculty": "Tonmoy Sahatonmoysaha179@gmail.com",
+        "section": "H",
+        "schedule": "Sun 08:30 - 11:00"
+      },
+      {
+        "faculty": "Raiyan Janik Monirraiyan.janik.monir@g.bracu.ac.bd",
+        "section": "I",
+        "schedule": "Tue 14:00 - 16:30"
+      },
+      {
+        "faculty": "Kazi Abdun Noorabdunnoor@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Raiyan Janik Monirraiyan.janik.monir@g.bracu.ac.bd",
+        "section": "K",
+        "schedule": "Wed 08:30 - 11:00"
+      }
+    ]
+  },
+  "CSE 4777": {
+    "name": "Networks Security",
+    "sections": [
+      {
+        "faculty": "Mir Moynuddin Ahmed Shiblymoynuddin@cse.uiu.ac.bd",
+        "section": "A",
+        "schedule": "Sat 13:51 - 15:10 Tue 13:51 - 15:10"
+      }
+    ]
+  },
+  "EEE 2124": {
+    "name": "Electronics Laboratory",
+    "sections": [
+      {
+        "faculty": "M. Fahmin Rahmanfahmin@cse.uiu.ac.bd",
+        "section": "A",
+        "schedule": "Sat 08:30 - 11:00"
+      },
+      {
+        "faculty": "Imran Hossainimran@cse.uiu.ac.bd",
+        "section": "B",
+        "schedule": "Sat 11:11 - 13:40"
+      },
+      {
+        "faculty": "Taki Yashirtaki@cse.uiu.ac.bd",
+        "section": "C",
+        "schedule": "Sun 08:30 - 11:00"
+      },
+      {
+        "faculty": "Md. Abid Hossainabid@cse.uiu.ac.bd",
+        "section": "D",
+        "schedule": "Sun 11:11 - 13:40"
+      },
+      {
+        "faculty": "Anudwaipaon Antuanudwaipaon@cse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Noman Asif Adityaaditya@cse.uiu.ac.bd",
+        "section": "F",
+        "schedule": "Tue 08:30 - 11:00"
+      },
+      {
+        "faculty": "Imran Hossainimran@cse.uiu.ac.bd",
+        "section": "G",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "M. Fahmin Rahmanfahmin@cse.uiu.ac.bd",
+        "section": "H",
+        "schedule": "Tue 14:00 - 16:30"
+      },
+      {
+        "faculty": "Taki Yashirtaki@cse.uiu.ac.bd",
+        "section": "I",
+        "schedule": "Wed 08:30 - 11:00"
+      },
+      {
+        "faculty": "Md. Abid Hossainabid@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Wed 11:11 - 13:40"
+      },
+      {
+        "faculty": "Anudwaipaon Antuanudwaipaon@cse.uiu.ac.bd",
+        "section": "K",
+        "schedule": "Wed 14:00 - 16:30"
+      }
+    ]
+  },
+  "CSE 3421": {
+    "name": "Software Engineering",
+    "sections": [
+      {
+        "faculty": "Samin Sharaf Somiksamin@cse.uiu.ac.bd",
+        "section": "A",
+        "schedule": "Sat 08:30 - 09:50 Tue 08:30 - 09:50"
+      },
+      {
+        "faculty": "Samin Sharaf Somiksamin@cse.uiu.ac.bd",
+        "section": "B",
+        "schedule": "Sat 11:11 - 12:30 Tue 11:11 - 12:30"
+      },
+      {
+        "faculty": "Md. Muhaiminul Islam Nafimuhaiminul@cse.uiu.ac.bd",
+        "section": "C",
+        "schedule": "Sat 12:31 - 13:50 Tue 12:31 - 13:50"
+      },
+      {
+        "faculty": "Samin Sharaf Somiksamin@cse.uiu.ac.bd",
+        "section": "D",
+        "schedule": "Sat 13:51 - 15:10 Tue 13:51 - 15:10"
+      },
+      {
+        "faculty": "Samin Sharaf Somiksamin@cse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Sun 08:30 - 09:50 Wed 08:30 - 09:50"
+      },
+      {
+        "faculty": "Didarul Islam Didardidarul@cse.uiu.ac.bd",
+        "section": "F",
+        "schedule": "Sun 09:51 - 11:10 Wed 09:51 - 11:10"
+      },
+      {
+        "faculty": "Md. Muhaiminul Islam Nafimuhaiminul@cse.uiu.ac.bd",
+        "section": "G",
+        "schedule": "Sun 11:11 - 12:30 Wed 11:11 - 12:30"
+      },
+      {
+        "faculty": "Didarul Islam Didardidarul@cse.uiu.ac.bd",
+        "section": "H",
+        "schedule": "Sun 12:31 - 13:50 Wed 12:31 - 13:50"
+      },
+      {
+        "faculty": "Didarul Islam Didardidarul@cse.uiu.ac.bd",
+        "section": "I",
+        "schedule": "Sun 13:51 - 15:10 Wed 13:51 - 15:10"
+      },
+      {
+        "faculty": "Md. Muhaiminul Islam Nafimuhaiminul@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Sun 15:11 - 16:30 Wed 15:11 - 16:30"
+      }
+    ]
+  },
+  "CSE 3522": {
+    "name": "Database Management Systems Laboratory",
+    "sections": [
+      {
+        "faculty": "Saifullah Mahbubsaifornab@gmail.com",
+        "section": "A",
+        "schedule": "Sat 08:30 - 11:00"
+      },
+      {
+        "faculty": "Mohammad Johirul Islamjohir123@gmail.com",
+        "section": "B",
+        "schedule": "Sat 11:11 - 13:40"
+      },
+      {
+        "faculty": "Sabber Ahmedsabber999@gmail.com",
+        "section": "C",
+        "schedule": "Sat 08:30 - 11:00"
+      },
+      {
+        "faculty": "Sayem Shahadsayem@cse.uiu.ac.bd",
+        "section": "D",
+        "schedule": "Sun 08:30 - 11:00"
+      },
+      {
+        "faculty": "Khandokar Md. Rahat Hossainrahat@cse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Tanmoy Bipro Dastanmoy@cse.uiu.ac.bd",
+        "section": "F",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Miftahul Sheikhmiftahulsheikh1100@gmail.com",
+        "section": "G",
+        "schedule": "Sun 11:11 - 13:40"
+      },
+      {
+        "faculty": "Shahil Yasar Haqueshahilyasarhaque@gmail.com",
+        "section": "H",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Mahmudul Hasanmahmudul@cse.uiu.ac.bd",
+        "section": "I",
+        "schedule": "Tue 08:30 - 11:00"
+      },
+      {
+        "faculty": "Khandokar Md. Rahat Hossainrahat@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Sabah Ahmedsabah@cse.uiu.ac.bd",
+        "section": "K",
+        "schedule": "Tue 08:30 - 11:00"
+      },
+      {
+        "faculty": "Jerin Hasan Priyapriyajerin9@gmail.com",
+        "section": "L",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Mahmudul Hasanmahmudul@cse.uiu.ac.bd",
+        "section": "M",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Sayem Shahadsayem@cse.uiu.ac.bd",
+        "section": "N",
+        "schedule": "Wed 08:30 - 11:00"
+      },
+      {
+        "faculty": "Md. Enamul Haquemhaque182055@bscse.uiu.ac.bd",
+        "section": "O",
+        "schedule": "Wed 11:11 - 13:40"
+      },
+      {
+        "faculty": "Sabah Ahmedsabah@cse.uiu.ac.bd",
+        "section": "P",
+        "schedule": "Wed 14:00 - 16:30"
+      },
+      {
+        "faculty": "Tahia Hossaintahiahossain23@gmail.com",
+        "section": "Q",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Tanmoy Bipro Dastanmoy@cse.uiu.ac.bd",
+        "section": "R",
+        "schedule": "Wed 14:00 - 16:30"
+      }
+    ]
+  },
+  "CSE 4510": {
+    "name": "Operating Systems Laboratory",
+    "sections": [
+      {
+        "faculty": "Md. Sajjad Hossainsajjad@cse.uiu.ac.bd",
+        "section": "A",
+        "schedule": "Sat 08:30 - 11:00"
+      },
+      {
+        "faculty": "Rakib Ahsanrakib@cse.uiu.ac.bd",
+        "section": "B",
+        "schedule": "Sat 11:11 - 13:40"
+      },
+      {
+        "faculty": "Mobaswirul Islammobaswirul@cse.uiu.ac.bd",
+        "section": "C",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Shahil Yasar Haqueshahilyasarhaque@gmail.com",
+        "section": "D",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Abrar Mahmudabrar@cse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Mobaswirul Islammobaswirul@cse.uiu.ac.bd",
+        "section": "F",
+        "schedule": "Tue 08:30 - 11:00"
+      },
+      {
+        "faculty": "Rakib Ahsanrakib@cse.uiu.ac.bd",
+        "section": "G",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Md. Sajjad Hossainsajjad@cse.uiu.ac.bd",
+        "section": "H",
+        "schedule": "Tue 14:00 - 16:30"
+      },
+      {
+        "faculty": "Md. Enamul Haquemhaque182055@bscse.uiu.ac.bd",
+        "section": "I",
+        "schedule": "Wed 08:30 - 11:00"
+      },
+      {
+        "faculty": "Azizur Rahman Anikazizur@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Wed 11:11 - 13:40"
+      },
+      {
+        "faculty": "Abrar Mahmudabrar@cse.uiu.ac.bd",
+        "section": "K",
+        "schedule": "Wed 14:00 - 16:30"
+      }
+    ]
+  },
+  "CSE 4165": {
+    "name": "Web Programming",
+    "sections": [
+      {
+        "faculty": "Md. Shafiul Alam",
+        "section": "A",
+        "schedule": "Sat 08:30 - 11:00"
+      },
+      {
+        "faculty": "Md. Shadman Aadeebshadman@cse.uiu.ac.bd",
+        "section": "B",
+        "schedule": "Sat 11:11 - 13:40"
+      },
+      {
+        "faculty": "Md. Shadman Aadeebshadman@cse.uiu.ac.bd",
+        "section": "C",
+        "schedule": "Sun 08:30 - 11:00"
+      },
+      {
+        "faculty": "Nahid Hossainnahid@cse.uiu.ac.bd",
+        "section": "D",
+        "schedule": "Sun 11:11 - 13:40"
+      },
+      {
+        "faculty": "Mahmudul Hasanmahmudul@cse.uiu.ac.bd",
+        "section": "E",
+        "schedule": "Sun 14:00 - 16:30"
+      },
+      {
+        "faculty": "Mahmudul Hasanmahmudul@cse.uiu.ac.bd",
+        "section": "F",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Nahid Hossainnahid@cse.uiu.ac.bd",
+        "section": "G",
+        "schedule": "Tue 14:00 - 16:30"
+      },
+      {
+        "faculty": "Nahid Hossainnahid@cse.uiu.ac.bd",
+        "section": "H",
+        "schedule": "Tue 11:11 - 13:40"
+      },
+      {
+        "faculty": "Tasmia Binte Sogirtasmia@cse.uiu.ac.bd",
+        "section": "I",
+        "schedule": "Sat 14:00 - 16:30"
+      },
+      {
+        "faculty": "Sabah Ahmedsabah@cse.uiu.ac.bd",
+        "section": "J",
+        "schedule": "Sun 08:30 - 11:00"
+      },
+      {
+        "faculty": "Md. Shadman Aadeebshadman@cse.uiu.ac.bd",
+        "section": "K",
+        "schedule": "Wed 08:30 - 11:00"
+      },
+      {
+        "faculty": "Nahid Hossainnahid@cse.uiu.ac.bd",
+        "section": "L",
+        "schedule": "Wed 11:11 - 13:40"
+      },
+      {
+        "faculty": "Mahmudul Hasanmahmudul@cse.uiu.ac.bd",
+        "section": "M",
+        "schedule": "Wed 14:00 - 16:30"
+      },
+      {
+        "faculty": "Sabah Ahmedsabah@cse.uiu.ac.bd",
+        "section": "N",
+        "schedule": "Sat 08:30 - 11:00"
+      }
+    ]
+  }
+};
+
+
+        // --- 2. GLOBAL STATE ---
+        let selectedSections = {};
+        
+        let allSortedSections = {}; // Stores { courseCode: [sorted sections...] }
+        let allSolutions = []; // Stores [ { score: X, days: Y, solution: [...] }, ... ]
+        let currentSolutionIndex = 0;
+        let courseCodesToSchedule = [];
+        
+        let lockedCourses = new Set();
+        let excludedDays = new Set();
+        
+        let isAiReviewLoading = false;
+
+        const dayOrder = { "Sat": 1, "Sun": 2, "Mon": 3, "Tue": 4, "Wed": 5, "Thu": 6, "Fri": 7 };
+        const daysOfWeek = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+        
+        // --- ★★★ CHANGE 1: UPDATED Weekly View Time Slots ★★★ ---
+        // These are the 6 lecture slots that define the university's schedule
+        const timeSlots = [
+            "8:30 - 9:50",
+            "9:51 - 11:10",
+            "11:11 - 12:30",
+            "12:31 - 13:50",
+            "13:51 - 15:10",
+            "15:11 - 16:30"
+        ];
+        
+        // --- ★★★ CHANGE 2: UPDATED Time Slot Minutes ★★★ ---
+        // These are the precise start/end times in minutes from midnight for each slot
+        const timeSlotMinutes = [
+            { start: 510, end: 590 },  // 8:30 - 9:50 (80 min)
+            { start: 591, end: 670 },  // 9:51 - 11:10 (79 min)
+            { start: 671, end: 750 },  // 11:11 - 12:30 (79 min)
+            { start: 751, end: 830 },  // 12:31 - 13:50 (79 min)
+            { start: 831, end: 910 },  // 13:51 - 15:10 (79 min)
+            { start: 911, end: 990 }   // 15:11 - 16:30 (79 min)
+        ];
+
+
+        // --- 3. HELPER FUNCTIONS ---
+
+        function getPriority(facultyStr) {
+            if (priority1_faculty.has(facultyStr)) return 1;
+            if (priority2_faculty.has(facultyStr)) return 2;
+            return 3;
+        }
+
+        function parseTimeInMinutes(timeStr) {
+            try {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function parseScheduleString(scheduleStr) {
+            if (!scheduleStr || typeof scheduleStr !== 'string') return [];
+            
+            const slots = [];
+            const pattern = /(Sat|Sun|Mon|Tue|Wed|Thu|Fri) (\d{2}:\d{2}) - (\d{2}:\d{2})/g;
+            let match;
+
+            while ((match = pattern.exec(scheduleStr)) !== null) {
+                const day = match[1];
+                const startTime = parseTimeInMinutes(match[2]);
+                const endTime = parseTimeInMinutes(match[3]);
+                if (startTime < endTime) {
+                    slots.push({ day, start: startTime, end: endTime });
+                }
+            }
+            return slots;
+        }
+        
+        function getEarliestSlot(parsedSchedule) {
+            if (!parsedSchedule || parsedSchedule.length === 0) {
+                return { day: "Sat", start: 9999, dayNum: 99 };
+            }
+            
+            return parsedSchedule.reduce((earliest, slot) => {
+                const slotDayNum = dayOrder[slot.day] || 99;
+                const earliestDayNum = dayOrder[earliest.day] || 99;
+
+                if (slotDayNum < earliestDayNum) return slot;
+                if (slotDayNum === earliestDayNum && slot.start < earliest.start) return slot;
+                return earliest;
+            }, { day: "Fri", start: 9999 });
+        }
+
+        function doSlotsClash(slots1, slots2) {
+            for (const s1 of slots1) {
+                for (const s2 of slots2) {
+                    if (s1.day === s2.day) {
+                        if (s1.start < s2.end && s2.start < s1.end) {
+                            return true; // Clash found
+                        }
+                    }
+                }
+            }
+            return false; // No clashes
+        }
+        
+        // --- UPDATED: More aggressive cleaning ---
+        function cleanFacultyName(facultyStr) {
+            if (typeof facultyStr !== 'string') return "N/A";
+            // Match up to the first sign of an email or a non-letter string
+            const match = facultyStr.match(/^([a-zA-Z\s.-]+)/);
+            return match ? match[1].trim() : "N/A";
+        }
+
+
+        // --- 4. CORE LOGIC ---
+
+        function handleSelectionChange(event) {
+            const selectElement = event.target;
+            const courseCode = selectElement.dataset.courseCode;
+            const selectedIndex = selectElement.selectedIndex;
+            
+            const courseName = selectElement.closest('.course-card').querySelector('p').textContent;
+
+            if (selectedIndex === 0) {
+                delete selectedSections[courseCode];
+                selectElement.classList.remove('selected-valid', 'selected-clash');
+            } else {
+                const selectedOption = selectElement.options[selectedIndex];
+                const section = JSON.parse(selectedOption.dataset.sectionInfo);
+                section.courseName = courseName; 
+                selectedSections[courseCode] = section;
+                selectElement.classList.add('selected-valid');
+                selectElement.classList.remove('selected-clash');
+            }
+
+            updateAllDropdowns();
+            updateSummary();
+            buildWeeklyView(); // Update weekly view
+            
+            document.getElementById('auto-select-nav').classList.add('hidden');
+        }
+
+        function updateAllDropdowns() {
+            const allSelects = document.querySelectorAll('select[data-course-code]');
+
+            allSelects.forEach(select => {
+                const currentCourseCode = select.dataset.courseCode;
+                
+                if (lockedCourses.has(currentCourseCode)) {
+                    select.disabled = true;
+                    select.classList.remove('selected-clash');
+                    select.classList.add('selected-valid');
+                    return; 
+                } else {
+                    select.disabled = false;
+                }
+                
+                let isCurrentSelectionClashed = false;
+                let currentSelectionClashText = ""; 
+
+                const infoBox = document.querySelector(`[data-course-code-info="${currentCourseCode}"]`);
+                let totalOptions = select.options.length - 1; 
+                let disabledOptionsCount = 0;
+                let clashReasons = new Set();
+
+                for (let i = 1; i < select.options.length; i++) { 
+                    const option = select.options[i];
+                    const optionSection = JSON.parse(option.dataset.sectionInfo);
+                    
+                    let hasClash = false;
+                    let clashText = ""; 
+
+                    for (const [otherCode, otherSection] of Object.entries(selectedSections)) {
+                        if (otherCode === currentCourseCode) continue; 
+
+                        if (doSlotsClash(optionSection.parsedSchedule, otherSection.parsedSchedule)) {
+                            hasClash = true;
+                            // --- UPDATED: Show course name in title ---
+                            clashText = `Clashes with: ${otherCode} (${otherSection.courseName}) - Sec ${otherSection.section}`;
+                            clashReasons.add(`${otherCode} (${otherSection.courseName})`);
+                            break; 
+                        }
+                    }
+
+                    option.disabled = hasClash;
+                    option.classList.toggle('clash', hasClash);
+
+                    if (hasClash) {
+                        option.title = clashText;
+                        disabledOptionsCount++; 
+                    } else {
+                        option.title = ""; 
+                    }
+
+                    if (select.value === option.value && hasClash) { 
+                        isCurrentSelectionClashed = true;
+                        currentSelectionClashText = clashText;
+                    }
+                }
+                
+                if (totalOptions > 0 && disabledOptionsCount === totalOptions && totalOptions > 0) {
+                    infoBox.style.display = 'block';
+                    infoBox.innerHTML = `All sections clash with:<br>• ${[...clashReasons].join('<br>• ')}`;
+                    select.classList.add('selected-clash');
+                    select.classList.remove('selected-valid');
+                    select.title = "All sections are in conflict with your other selections.";
+                } else {
+                    infoBox.style.display = 'none';
+                    infoBox.innerHTML = '';
+                    
+                    if (select.selectedIndex > 0) {
+                        select.classList.toggle('selected-clash', isCurrentSelectionClashed);
+                        select.classList.toggle('selected-valid', !isCurrentSelectionClashed);
+                        select.title = currentSelectionClashText; 
+                    } else {
+                        select.title = ""; 
+                        select.classList.remove('selected-clash', 'selected-valid');
+                    }
+                }
+            });
+        }
+
+        /**
+         * --- UPDATED: Summary now builds a sorted table ---
+         */
+        function updateSummary() {
+            const summaryContent = document.getElementById('summary-content');
+            const summaryDetails = document.getElementById('summary-details');
+            const aiReviewBtn = document.getElementById('ai-review-btn');
+
+            const selectedCount = Object.keys(selectedSections).length;
+            const totalCourses = Object.keys(courseData).length;
+
+            if (selectedCount === 0) {
+                summaryContent.innerHTML = `<p>Awaiting input... Select sections or use the Generator.</p>`;
+                summaryDetails.innerHTML = '<table class="w-full text-sm"></table>'; // Clear table
+                aiReviewBtn.disabled = true; // Disable AI button
+                document.getElementById('ai-review-box').style.display = 'none'; // Hide AI box
+                return;
+            }
+
+            let allDays = new Set();
+            let totalPriorityScore = 0;
+            let clashMessages = []; 
+            
+            const sections = Object.values(selectedSections);
+            sections.sort((a, b) => {
+                const slotA = getEarliestSlot(a.parsedSchedule);
+                const slotB = getEarliestSlot(b.parsedSchedule);
+                const dayNumA = dayOrder[slotA.day] || 99;
+                const dayNumB = dayOrder[slotB.day] || 99;
+
+                if (dayNumA !== dayNumB) return dayNumA - dayNumB;
+                return slotA.start - slotB.start;
+            });
+
+            
+            let detailsHtml = `
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs uppercase">
+                        <tr>
+                            <th scope="col" class="py-3 px-4">Course</th>
+                            <th scope="col" class="py-3 px-4">Faculty</th>
+                            <th scope="col" class="py-3 px-4">Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            for (let i = 0; i < sections.length; i++) {
+                const sectionA = sections[i];
+                totalPriorityScore += sectionA.priority;
+                sectionA.parsedSchedule.forEach(slot => allDays.add(slot.day));
+                
+                // Check for clashes
+                for (let j = i + 1; j < sections.length; j++) {
+                    const sectionB = sections[j];
+                    if (doSlotsClash(sectionA.parsedSchedule, sectionB.parsedSchedule)) {
+                        clashMessages.push(`<strong>${sectionA.courseCode} (${sectionA.section})</strong> clashes with <strong>${sectionB.courseCode} (${sectionB.section})</strong>`);
+                    }
+                }
+                
+                let prioDisplay = '';
+                if (sectionA.priority === 1) prioDisplay = `<span class="text-xs font-medium"><span class="emoji-p1">⭐</span> P1</span>`;
+                else if (sectionA.priority === 2) prioDisplay = `<span class="text-xs font-medium"><span class="emoji-p2">👍</span> P2</span>`;
+                else prioDisplay = `<span class="text-xs font-medium p3">(P3)</span>`;
+                
+                const lockIcon = lockedCourses.has(sectionA.courseCode) ? '🔒' : '';
+                const facultyName = cleanFacultyName(sectionA.faculty);
+                // --- NEW: Get course color ---
+                const color = courseColors[sectionA.courseCode] || '#6b7281';
+
+                detailsHtml += `
+                    <tr class="border-b" style="border-left: 4px solid ${color};">
+                        <td class="py-3 px-4 font-medium">
+                            ${lockIcon} ${sectionA.courseCode} (${sectionA.section}) ${prioDisplay}
+                            <div class="text-xs" style="color: #9ca3af;">${sectionA.courseName}</div>
+                        </td>
+                        <td class="py-3 px-4">${facultyName}</td>
+                        <td class="py-3 px-4 font-mono">${sectionA.schedule}</td>
+                    </tr>
+                `;
+            }
+            detailsHtml += `</tbody></table>`;
+
+
+            let statusMessage = `<strong>${selectedCount} of ${totalCourses}</strong> courses selected.`;
+            statusMessage += ` | <strong>${allDays.size} Days:</strong> ${[...allDays].sort().join(', ')}`;
+            statusMessage += ` | <strong>Priority Score:</strong> ${totalPriorityScore}`;
+            
+            const isComplete = selectedCount === totalCourses;
+            const hasClashes = clashMessages.length > 0;
+
+            if (hasClashes) {
+                summaryContent.innerHTML = `<div class="font-bold" style="color: #f87171;">CLASH DETECTED!</div>
+                                            <p>${statusMessage}</p>
+                                            <div class="text-sm mt-2" style="color: #fca5a5;">${clashMessages.join('<br>')}</div>`;
+                aiReviewBtn.disabled = true;
+                aiReviewBtn.title = "Resolve clashes to get a review.";
+            } else if (isComplete) {
+                summaryContent.innerHTML = `<div class="font-bold" style="color: #4ade80;">Complete Schedule! No Clashes.</div><p>${statusMessage}</p>`;
+                aiReviewBtn.disabled = isAiReviewLoading; // Keep disabled if loading
+                aiReviewBtn.title = "Get an AI-powered review of this schedule.";
+            } else {
+                 summaryContent.innerHTML = `<div class="font-bold" style="color: #60a5fa;">Schedule in Progress...</div><p>${statusMessage}</p>`;
+                aiReviewBtn.disabled = true;
+                aiReviewBtn.title = "Select all courses to get a review.";
+            }
+            
+            if (!isComplete || hasClashes) {
+                document.getElementById('ai-review-box').style.display = 'none';
+            }
+
+            summaryDetails.innerHTML = detailsHtml;
+        }
+
+        // --- 5. AUTO-SELECT LOGIC ---
+
+        function findCombinationsRecursive(courseIndex, currentSelection, allFoundSolutions) {
+            
+            if (courseIndex === courseCodesToSchedule.length) {
+                let totalPriorityScore = 0;
+                let allDays = new Set();
+                
+                currentSelection.forEach(section => {
+                    totalPriorityScore += section.priority;
+                    section.parsedSchedule.forEach(slot => allDays.add(slot.day));
+                });
+                
+                allFoundSolutions.push({
+                    score: totalPriorityScore,
+                    days: allDays.size,
+                    solution: [...currentSelection] 
+                });
+                return;
+            }
+
+            const courseCode = courseCodesToSchedule[courseIndex];
+            const sections = allSortedSections[courseCode];
+
+            for (const section of sections) {
+                
+                let isExcluded = section.parsedSchedule.some(slot => excludedDays.has(slot.day));
+                if (isExcluded) continue; 
+
+                let hasClash = false;
+                for (const chosenSection of currentSelection) { 
+                    if (doSlotsClash(section.parsedSchedule, chosenSection.parsedSchedule)) {
+                        hasClash = true;
+                        break;
+                    }
+                }
+
+                if (!hasClash) {
+                    currentSelection.push(section);
+                    findCombinationsRecursive(courseIndex + 1, currentSelection, allFoundSolutions);
+                    currentSelection.pop(); 
+                }
+            }
+        }
+        
+        function applySolution(solution) {
+            if (!solution) return;
+            
+            document.querySelectorAll('select[data-course-code]').forEach(select => {
+                if (!lockedCourses.has(select.dataset.courseCode)) {
+                    select.selectedIndex = 0;
+                }
+            });
+            
+            selectedSections = {};
+            lockedCourses.forEach(courseCode => {
+                const select = document.querySelector(`select[data-course-code="${courseCode}"]`);
+                if(select.selectedIndex > 0) {
+                     const section = JSON.parse(select.options[select.selectedIndex].dataset.sectionInfo);
+                     section.courseName = select.closest('.course-card').querySelector('p').textContent;
+                     selectedSections[courseCode] = section;
+                }
+            });
+
+            for (const section of solution.solution) {
+                if (!lockedCourses.has(section.courseCode)) {
+                    const select = document.querySelector(`select[data-course-code="${section.courseCode}"]`);
+                    if (select) {
+                        select.value = section.schedule;
+                        selectedSections[section.courseCode] = section;
+                    }
+                }
+            }
+            
+            updateAllDropdowns();
+            updateSummary();
+            buildWeeklyView(); // Update weekly view
+        }
+
+        function updateNavUI() {
+            const nav = document.getElementById('auto-select-nav');
+            const index = document.getElementById('solution-index');
+            const prevBtn = document.getElementById('prev-solution');
+            const nextBtn = document.getElementById('next-solution');
+
+            if (allSolutions.length > 0) {
+                nav.classList.remove('hidden');
+                index.textContent = `${currentSolutionIndex + 1} of ${allSolutions.length}`;
+                prevBtn.disabled = (currentSolutionIndex === 0);
+                nextBtn.disabled = (currentSolutionIndex === allSolutions.length - 1);
+            } else {
+                nav.classList.add('hidden');
+                index.textContent = '0 of 0';
+            }
+        }
+        
+        function runGenerateCombinations() {
+            const btn = document.getElementById('auto-select-btn');
+            btn.textContent = 'Generating...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                allSolutions = []; 
+                currentSolutionIndex = 0;
+                
+                let initialSelection = [];
+                let lockedClash = false;
+                const lockedSections = [];
+                lockedCourses.forEach(courseCode => {
+                    if (selectedSections[courseCode]) {
+                        lockedSections.push(selectedSections[courseCode]);
+                    }
+                });
+                
+                for(let i = 0; i < lockedSections.length; i++) {
+                    for(let j = i + 1; j < lockedSections.length; j++) {
+                        if (doSlotsClash(lockedSections[i].parsedSchedule, lockedSections[j].parsedSchedule)) {
+                            lockedClash = true;
+                            updateSummary(); 
+                            document.getElementById('summary-content').innerHTML = `<div class="font-bold" style="color: #f87171;">Your LOCKED courses clash!</div>
+                                <p>Cannot generate combinations until locked clashes are resolved.</p>`;
+                            break;
+                        }
+                    }
+                    if(lockedClash) break;
+                }
+
+                if (lockedClash) {
+                    btn.textContent = 'Generate';
+                    btn.disabled = false;
+                    updateNavUI(); 
+                    return; 
+                }
+                
+                initialSelection = lockedSections;
+
+                courseCodesToSchedule = Object.keys(allSortedSections).filter(code => !lockedCourses.has(code));
+
+                findCombinationsRecursive(0, initialSelection, allSolutions);
+
+                const sortCriteria = document.getElementById('sort-criteria').value;
+                allSolutions.sort((a, b) => {
+                    if (sortCriteria === 'compact') {
+                        if (a.days !== b.days) return a.days - b.days; 
+                        return a.score - b.score; 
+                    } else { // 'priority'
+                        if (a.score !== b.score) return a.score - b.score; 
+                        return a.days - b.days; 
+                    }
+                });
+                
+                if (allSolutions.length > 0) {
+                    applySolution(allSolutions[0]);
+                } else {
+                    updateSummary(); // Run summary to show locked courses
+                     document.getElementById('summary-content').innerHTML = `<div class="font-bold" style="color: #f87171;">No non-clashing combinations found!</div>
+                        <p>Try removing locked courses or excluded days.</p>`;
+                    document.getElementById('summary-details').innerHTML = '<table class="w-full text-sm"></table>';
+                }
+                
+                updateNavUI();
+                btn.textContent = 'Generate';
+                btn.disabled = false;
+            }, 50); 
+        }
+        
+        document.getElementById('prev-solution').addEventListener('click', () => {
+            if (currentSolutionIndex > 0) {
+                currentSolutionIndex--;
+                applySolution(allSolutions[currentSolutionIndex]);
+                updateNavUI();
+            }
+        });
+
+        document.getElementById('next-solution').addEventListener('click', () => {
+            if (currentSolutionIndex < allSolutions.length - 1) {
+                currentSolutionIndex++;
+                applySolution(allSolutions[currentSolutionIndex]);
+                updateNavUI();
+            }
+        });
+        
+        document.getElementById('day-toggle-group').addEventListener('click', (e) => {
+            if (e.target.classList.contains('day-toggle')) {
+                const btn = e.target;
+                const day = btn.dataset.day;
+                btn.classList.toggle('selected');
+                if (excludedDays.has(day)) {
+                    excludedDays.delete(day);
+                } else {
+                    excludedDays.add(day);
+                }
+                document.getElementById('auto-select-nav').classList.add('hidden');
+            }
+        });
+
+
+        // --- 6. GEMINI API CALL LOGIC ---
+        
+        const exponentialBackoff = async (asyncFn, maxRetries = 3, delay = 1000) => {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    return await asyncFn();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+        };
+
+        // --- UPDATED: AI prompt for keywords ---
+        const generateAiReview = async (scheduleText) => {
+            const apiKey = ""; // API key will be provided by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are a university advisor. A student has provided their course schedule. 
+            Analyze its balance, intensity, and any busy days. 
+            Respond with ONLY a JSON object in the format: {"keywords": ["Keyword 1", "Keyword 2", "Max 5 Keywords"]}.
+            Keywords should be 1-3 words each, e.g., "Heavy Wednesdays", "Balanced", "Morning-Focused", "Potential Burnout", "Good Gaps", "Lab Heavy".`;
+            
+            const userQuery = `My schedule:\n${scheduleText}\n\nAnalyze this and return ONLY the JSON keyword object.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                // --- NEW: Request JSON output ---
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
+            };
+
+            const fetchFn = async () => {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
+                return response.json();
+            };
+
+            try {
+                const result = await exponentialBackoff(fetchFn);
+                const candidate = result.candidates?.[0];
+                const jsonText = candidate?.content?.parts?.[0]?.text;
+                
+                if (jsonText) {
+                    const parsed = JSON.parse(jsonText);
+                    if (parsed.keywords && Array.isArray(parsed.keywords)) {
+                        return parsed.keywords;
+                    }
+                }
+                throw new Error("Invalid JSON response from API.");
+            } catch (error) {
+                console.error("Error generating AI review:", error);
+                return ["Error: Could not get review"];
+            }
+        };
+        
+        const handleAiReviewClick = async () => {
+            if (isAiReviewLoading) return;
+
+            isAiReviewLoading = true;
+            document.getElementById('ai-review-btn').disabled = true;
+            
+            const reviewBox = document.getElementById('ai-review-box');
+            const reviewContent = document.getElementById('ai-review-content');
+            
+            reviewBox.style.display = 'block';
+            reviewContent.innerHTML = '<div class="spinner"></div><p class="text-center text-gray-500">Generating AI keywords...</p>';
+
+            const scheduleText = Object.values(selectedSections)
+                .map(s => `- ${s.courseCode}: ${s.schedule}`)
+                .join('\n');
+
+            const keywords = await generateAiReview(scheduleText);
+
+            // --- UPDATED: Display keywords as pills ---
+            const keywordsHtml = keywords.map(kw => `<span class="ai-keyword">${kw}</span>`).join(' ');
+            reviewContent.innerHTML = keywordsHtml;
+            
+            isAiReviewLoading = false;
+            updateSummary(); // Re-enable button if still valid
+        };
+
+        // --- 7. WEEKLY VIEW LOGIC ---
+        // --- UPDATED: Complete rewrite for accurate time slots ---
+        function buildWeeklyView() {
+            const view = document.getElementById('weekly-view');
+            let html = '<table class="w-full text-center">';
+            
+            // Header Row
+            html += '<thead><tr><th class="time-header p-2 w-32">Time</th>'; // w-32 for 128px
+            daysOfWeek.forEach(day => {
+                html += `<th class="day-header p-2">${day}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // Data Rows (Based on lecture slots)
+            timeSlotMinutes.forEach((slot, i) => {
+                const timeLabel = timeSlots[i];
+                // --- ★★★ CHANGE 3.1: Updated row height & label class ★★★ ---
+                // h-16 is 4rem (64px). Added whitespace-nowrap for the new labels
+                html += `<tr><td class="time-header p-2 h-16 whitespace-nowrap">${timeLabel}</td>`; 
+                
+                daysOfWeek.forEach(day => {
+                    // This cell is the container for the lecture-slot block
+                    html += `<td class="calendar-cell p-0" data-day="${day}" data-time-start="${slot.start}">`;
+                    
+                    const sectionsInThisCell = [];
+                    // Find all sections that overlap with this lecture-slot block
+                    for (const [courseCode, section] of Object.entries(selectedSections)) {
+                        for (const classSlot of section.parsedSchedule) {
+                            // Check for overlap
+                            if (classSlot.day === day && classSlot.start < slot.end && classSlot.end > slot.start) {
+                                sectionsInThisCell.push({section, classSlot});
+                            }
+                        }
+                    }
+                    
+                    // Check for clashes within this cell
+                    let isClash = false;
+                    for (let j = 0; j < sectionsInThisCell.length; j++) {
+                        for (let k = j + 1; k < sectionsInThisCell.length; k++) {
+                            if (doSlotsClash([sectionsInThisCell[j].classSlot], [sectionsInThisCell[k].classSlot])) {
+                                isClash = true;
+                                break;
+                            }
+                        }
+                        if(isClash) break;
+                    }
+
+                    // Render the slots that overlap with this lecture-slot block
+                    sectionsInThisCell.forEach(({section, classSlot}) => {
+                        const cellStartTime = slot.start;
+                        const cellEndTime = slot.end;
+                        // --- ★★★ CHANGE 3.2: Dynamic cell duration ★★★ ---
+                        const cellDuration = slot.end - slot.start; // No longer a fixed 60!
+                        
+                        // Calculate top offset and height
+                        const top = Math.max(0, classSlot.start - cellStartTime);
+                        const bottom = Math.min(cellDuration, classSlot.end - cellStartTime);
+                        const duration = bottom - top;
+                        
+                        const offsetPercent = (top / cellDuration) * 100;
+                        const heightPercent = (duration / cellDuration) * 100;
+                        
+                        const color = courseColors[section.courseCode] || '#6b7281';
+                        const shortName = shortNames[section.courseCode] || section.courseCode;
+                        
+                        const clashClass = isClash ? 'slot-clash' : '';
+                        const style = `
+                            background-color: ${color}33; 
+                            border-color: ${color}99; 
+                            box-shadow: 0 0 10px ${color}55;
+                            top: ${offsetPercent}%; 
+                            height: ${heightPercent}%;
+                        `;
+                        
+                        html += `<div class="calendar-slot ${clashClass}" style="${style}" title="${section.courseName} (${section.section}) | ${classSlot.day} ${String(Math.floor(classSlot.start/60)).padStart(2,'0')}:${String(classSlot.start%60).padStart(2,'0')} - ${String(Math.floor(classSlot.end/60)).padStart(2,'0')}:${String(classSlot.end%60).padStart(2,'0')}">
+                            <strong>${shortName}</strong> (${section.section})
+                        </div>`;
+                    });
+
+                    html += '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            view.innerHTML = html;
+        }
+
+        // --- 8. INITIALIZATION ---
+
+        function initializeScheduler() {
+            const grid = document.getElementById('course-grid');
+            const allCourseCodes = Object.keys(courseData).sort(); 
+
+            for (const courseCode of allCourseCodes) {
+                const course = courseData[courseCode];
+                
+                // --- UPDATED: Added 'glass-card' class ---
+                const card = document.createElement('div');
+                card.className = "glass-card p-5 flex flex-col course-card";
+                // --- NEW: Add course color border ---
+                const color = courseColors[courseCode] || '#6b7281';
+                card.style.borderLeft = `4px solid ${color}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-lg font-semibold">${courseCode}</h3>
+                        <button class="lock-btn" data-course-code="${courseCode}" title="Lock this selection">🔓</button>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4 h-10">${course.name}</p>
+                    <div data-course-code-info="${courseCode}" class="text-xs text-red-400 mb-2" style="display: none;"></div>
+                    <select data-course-code="${courseCode}" class="mt-auto w-full p-2 border rounded-md focus:outline-none focus:ring-2 transition-all">
+                        <option value="">Select a section...</option>
+                    </select>
+                `;
+
+                const select = card.querySelector('select');
+                const lockBtn = card.querySelector('.lock-btn');
+
+                const sortedSections = course.sections.map(section => {
+                    const priority = getPriority(section.faculty);
+                    const parsedSchedule = parseScheduleString(section.schedule);
+                    return { ...section, priority, parsedSchedule, courseCode, courseName: course.name };
+                }).sort((a, b) => {
+                    if (a.priority !== b.priority) return a.priority - b.priority;
+                    return a.section.localeCompare(b.section);
+                });
+                
+                allSortedSections[courseCode] = sortedSections;
+
+                sortedSections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.schedule; 
+                    
+                    const priorityClass = `p${section.priority}`;
+                    let prioTag = '';
+                    if (section.priority === 1) prioTag = '⭐ P1';
+                    else if (section.priority === 2) prioTag = '👍 P2';
+                    else prioTag = '(P3)';
+
+                    const facultyName = cleanFacultyName(section.faculty);
+                    option.textContent = `Sec ${section.section} ${prioTag} - ${facultyName} - ${section.schedule}`;
+                    option.classList.add(priorityClass); 
+                    
+                    option.dataset.sectionInfo = JSON.stringify(section);
+                    
+                    select.appendChild(option);
+                });
+                
+                select.addEventListener('change', handleSelectionChange);
+                
+                lockBtn.addEventListener('click', () => {
+                    const code = lockBtn.dataset.courseCode;
+                    if (lockedCourses.has(code)) {
+                        lockedCourses.delete(code);
+                        lockBtn.textContent = '🔓';
+                        lockBtn.title = 'Lock this selection';
+                        lockBtn.classList.remove('locked');
+                        select.disabled = false;
+                    } else {
+                        if (select.selectedIndex === 0) {
+                            // Using a custom-styled alert is complex, stick to browser default for now
+                            alert("Please select a section before locking.");
+                            return;
+                        }
+                        lockedCourses.add(code);
+                        lockBtn.textContent = '🔒';
+                        lockBtn.title = 'Unlock this selection';
+                        lockBtn.classList.add('locked');
+                        select.disabled = true;
+                    }
+                    document.getElementById('auto-select-nav').classList.add('hidden');
+                    updateAllDropdowns();
+                    updateSummary();
+                    buildWeeklyView(); // Update weekly view
+                });
+                
+                if (course.sections.length === 1) {
+                    select.selectedIndex = 1; // Select the only section
+                    lockedCourses.add(courseCode);
+                    lockBtn.textContent = '🔒';
+                    lockBtn.title = 'Unlock this selection';
+                    lockBtn.classList.add('locked');
+                    select.disabled = true;
+                    
+                    const section = JSON.parse(select.options[1].dataset.sectionInfo);
+                    section.courseName = course.name; 
+                    selectedSections[courseCode] = section;
+                }
+                
+                grid.appendChild(card);
+            }
+            
+            buildWeeklyView(); // Initial build (empty)
+            updateAllDropdowns();
+            updateSummary();
+            
+            document.getElementById('auto-select-btn').addEventListener('click', runGenerateCombinations);
+            document.getElementById('ai-review-btn').addEventListener('click', handleAiReviewClick);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeScheduler);
+
+    </script>
+</body>
+</html>
